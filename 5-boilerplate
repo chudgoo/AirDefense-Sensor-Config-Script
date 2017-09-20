@@ -1,0 +1,119 @@
+	#!/usr/bin/expect
+
+#CHANGE VALUES AS NEEDED!
+#CHANGE VALUES AS NEEDED!
+#CHANGE VALUES AS NEEDED!
+
+set timeout 2
+
+set ip [lindex $argv 0]
+set gw [lindex $argv 1]
+set hn [lindex $argv 2]
+set loc [lindex $argv 3]
+
+set send_human {.2 .4 1 .1 8}
+
+#EDIT THE LINE TO INDICATE WHICH USB TO SERIAL DEVICE IS BEING USED!
+#spawn screen -S USBSERIAL /dev/tty.PL2303-00004004 19200
+spawn screen -S USBSERIAL /dev/tty.usbserial 19200
+
+#THIS PART IS FOR SENSORS THAT STILL HAVE DEFAULT PASSWORD
+#LOG IN AND CHANGE DEFAULT PASSWORD TO CURRENT ADMIN PASSWORD
+send "\r"
+send "\r"
+send "\r"
+
+expect "login:"
+
+send "admin\r"
+
+expect "password:"
+send "motorola\r"
+expect "Enter new password:"
+send "MYPASSWORD\r"
+sleep 1
+expect "Confirm new password:"
+expect "password:"
+send "MYPASSWORD\r"
+
+sleep 5
+
+#SET COUNTRY CODE, HOSTNAME, ETC
+send "enable\r"
+send "self\r"
+send "country-code us\r"
+send "configuration-persistence\r"
+send "hostname AD-$loc\r"
+
+#DISABLE AUTO-ADOPTION BY WiNG5 CONTROLLER 
+send "no mint mlcp vlan\r"
+send "no mint mlcp ip\r"
+
+#SET CONTACT INFO AND AIRDEFENSE SERVERS, ETC.
+send "contact MYHELPDESK\r"
+send "location $loc\r"
+send "sensor-server 1 ip MY-PRIMARY-AD-SERVER.MYDOMAIN.COM\r"
+send "sensor-server 2 ip MY-SECONDARY-AD-SERVER.MYDOMAIN.COM\r"
+send "ip domain-name MYDOMAIN.COM\r"
+send "ip name-server 7.7.7.7\r"
+
+#ENABLE SENSOR MODE ON BOTH RADIOS
+
+send "interface radio 1\r"
+expect "if-radio1)#"
+send "rf-mode sensor\r"
+send "exit\r"
+send "interface radio 2\r"
+expect "if-radio2)#"
+send "rf-mode sensor\r"
+send "exit\r"
+
+#WAIT WHILE CONFIG IS WRITTEN TO MEMORY
+sleep 5 
+
+#Remove the overrides for the virtual IP interface VLAN 1
+expect "#"
+send "conf t\r"
+send "self\r"
+send "remove-override interface vlan 1\r"
+
+#Create a virtual IP interface for VLAN 1 and assign a static IP address:
+send "interface vlan 1\r"
+expect "if-vlan1)#"
+send "ip address 192.168.$ip/24\r"
+send "exit\r"
+
+# SET DEFAULT GATEWAY
+send "ip default-gateway $gw\r"
+send "..\r"
+expect "(config)#"
+send "management-policy default\r"
+#WHETHER OR NOT YOU WANT TO USE HTTT(S) IS YOUR BUSINESS BUT THEY ARE DISABLED HERE.
+send "no http server\r"
+send "no https server\r"
+send "snmp-server manager v2\r"
+send "no snmp-server manager v3\r"
+send "no snmp-server community public ro\r"
+send "no snmp-server community private rw\r"
+send "snmp-server community MYREADSTRING ro\r"
+send "snmp-server community MYWRITESTRING rw\r"
+send "..\r"
+send "..\r"
+send "commit write\r"
+sleep 5
+send "reload\r"
+expect "The system will be rebooted, do you want to continue? (y/n):"
+send "y"
+
+exec screen -S USBSERIAL -X quit
+
+#THIS USED TO BE NEEDED TO "RESET" THE USB-TO-SERIAL ADAPTER IN THE EVENT OF AN ERROR
+#exec "sudo /System/Library/Extensions/kextunload osx-pl2303.kext"
+#exec "sudo /System/Library/Extensions/kextload osx-pl2303.kext"
+
+#THIS WAS AN AUDIBLE INDICATION THAT THE CONFIG WAS SUCCESSFUL. CHANGE TO YOUR OWN SOUND EFFECT IF DESIRED
+#exec afplay Ship_Bell-Mike_Koenig-1911209136.mp3
+
+exit
+
+exit
