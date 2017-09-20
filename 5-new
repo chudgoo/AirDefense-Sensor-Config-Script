@@ -20,10 +20,10 @@ hn="AD-$loc"
 #echo $(date '+%Y-%m-%d  %H:%M:%S') | tr '\n' ',' >> ./UpgradedSensorList.txt
 
 #HERE IS WHERE THE EXPECT SCRIPT (THAT TALKS DIRECTLY TO THE AP/SENSOR) KICKS OFF 
-expect ./5-new-boil $ip $gw $hn $loc
+expect ./5-boilerplate $ip $gw $hn $loc
 
 #HERE IS AN OLDER VERSION THAT LOGGED THE DETAILS OF EACH CONFIGURED SENSOR
-#expect ./5-new-boil $ip $gw $hn $loc | tee -ia ./5-fixed.txt | sed 's/.$//' | egrep -i "system name|IP Address 1|Ethernet Address|serial number" | sed 's/.*: //' | tr '\n' ',' | tee -ia ./5-fixed-list.txt
+#expect ./5-boilerplate $ip $gw $hn $loc | tee -ia ./5-fixed.txt | sed 's/.$//' | egrep -i "system name|IP Address 1|Ethernet Address|serial number" | sed 's/.*: //' | tr '\n' ',' | tee -ia ./5-fixed-list.txt
 
 #THIS IS USED ON MAC SYSTEMS TO SOFT RESET THE USB TO SERIAL ADAPTER IN CASE OF WONKINESS
 #sudo kextunload /System/Library/Extensions/osx-pl2303.kext
