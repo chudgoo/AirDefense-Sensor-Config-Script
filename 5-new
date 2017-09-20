@@ -1,0 +1,30 @@
+        #! /bin/bash
+
+#CHANGE IPS/LOCATION NAMING SCHEMES AS NEEDED!
+
+echo "What are the last two octets of the IP for this sensor? (192.168.x.y)"
+read ip
+
+# some sort of regex to get the gateway
+# CHANGE THE .123 TO YOUR GATEWAY ADDRESS ON YOUR NETWORK
+gw=$(echo 192.168.$ip | sed 's/[0-9]\{1,3\}$/123/')
+
+#CHANGE LOCATION VALUES TO FIT YOUR ENVIRONMENT NAMING SCHEME
+echo "Where will this sensor be installed? (ex. CITY-BUILDING-ROOM)"
+read loc
+
+#CHANGE "AD-" TO MATCH YOUR NAMING SCHEME
+hn="AD-$loc"
+
+#SOME LEFTOVER LOGGING STUFF
+#echo $(date '+%Y-%m-%d  %H:%M:%S') | tr '\n' ',' >> ./UpgradedSensorList.txt
+
+#HERE IS WHERE THE EXPECT SCRIPT (THAT TALKS DIRECTLY TO THE AP/SENSOR) KICKS OFF 
+expect ./5-new-boil $ip $gw $hn $loc
+
+#HERE IS AN OLDER VERSION THAT LOGGED THE DETAILS OF EACH CONFIGURED SENSOR
+#expect ./5-new-boil $ip $gw $hn $loc | tee -ia ./5-fixed.txt | sed 's/.$//' | egrep -i "system name|IP Address 1|Ethernet Address|serial number" | sed 's/.*: //' | tr '\n' ',' | tee -ia ./5-fixed-list.txt
+
+#THIS IS USED ON MAC SYSTEMS TO SOFT RESET THE USB TO SERIAL ADAPTER IN CASE OF WONKINESS
+#sudo kextunload /System/Library/Extensions/osx-pl2303.kext
+#sudo kextload /System/Library/Extensions/osx-pl2303.kext  
